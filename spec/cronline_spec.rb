@@ -879,6 +879,38 @@ describe Rufus::Scheduler::CronLine do
       end
     end
 
+    it 'correctly increments through a DST transition in the Fall' do
+
+      expect(
+        nt('* * * * * America/Los_Angeles', Time.utc(2015, 11, 1, 9, 59))
+      ).to eq(Time.utc(2015, 11, 1, 9, 00))
+    end
+
+    it 'correctly increments every minute through a DST transition in the Fall' do
+
+      in_zone 'America/Los_Angeles' do
+
+        line = cl('* * * * * America/Los_Angeles')
+
+        t = Time.local(2015, 11, 1, 1, 57)
+
+        points =
+          [ 0, 1, 2, 3 ].collect do
+            t = line.next_time(t)
+            t.strftime('%H:%M:%Sl') + ' ' + t.dup.utc.strftime('%H:%M:%Su')
+          end
+
+        expect(points).to eq(
+          [
+            '01:58:00l 09:58:00u',
+            '01:59:00l 09:59:00u',
+            '01:00:00l 09:00:00u',
+            '01:01:00l 09:01:00u'
+          ]
+        )
+      end
+    end
+
     it 'correctly decrements through a DST transition' do
 
       expect(
